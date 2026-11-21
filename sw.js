@@ -1,9 +1,8 @@
-const CACHE_NAME = 'oderzhimye-offline-v1';
+const CACHE_NAME = 'oderzhimye-offline-v4';
 const ASSETS = [
   './', './index.html', './manifest.json', './css/styles.css',
   './js/data.js', './js/state.js', './js/world.js', './js/survival.js',
-  './js/combat.js', './js/interpreter.js', './js/app.js',
-  './assets/person.svg', './assets/possessed.svg'
+  './js/combat.js', './js/interpreter.js', './js/devices.js', './js/gm.js', './js/app.js',
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));

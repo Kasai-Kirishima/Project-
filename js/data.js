@@ -14,17 +14,37 @@
     {name:'Шёпот',gift:'Чуткий слух',desc:'Улавливает тихие звуки и движение за тонкими преградами.',mark:'Завиток за ухом',skill:'наблюдательность',power:'эхолокация'},
     {name:'Лёд',gift:'Холодное касание',desc:'Понижает температуру небольшого предмета или участка поверхности.',mark:'Голубоватый геометрический узор',skill:'контроль',power:'охлаждение'}
   ];
+  // У каждого духа только один носитель: либо одержимый человек, либо ходячий.
+  // Первые десять имён сохраняют основные известные сущности; остальные — уникальные имена духов.
+  const spiritPrefixes = ['Тихий','Серый','Чёрный','Белый','Ржавый','Пепельный','Древний','Холодный','Бледный','Алый','Сломанный','Пустой','Глухой','Дальний'];
+  const spiritSuffixes = ['Порог','Омут','Скиталец','Жнец','Страж','Шорох','Предел','Осколок','Прах','Ветер'];
+  const spiritIdentityNames = [...spirits.map(x=>x.name), ...spiritPrefixes.flatMap(a=>spiritSuffixes.map(b=>`${a} ${b}`))].slice(0,150);
   const surnames2 = ['Альбрехт','Бранднер','Дитрих','Энгель','Фальк','Герц','Инграм','Йегер','Крон','Леман','Майер','Норр','Отто','Прайс','Квант','Рот','Зайдель','Тиль','Ульман','Фосс'];
   const possessed = Array.from({length:50}, (_,i) => {
-    const s = spirits[i % spirits.length];
+    const template = spirits[i % spirits.length];
     const first = firstNames[(i*7+3)%firstNames.length];
     const last = surnames2[(i*3+5)%surnames2.length];
-    return {id:`poss-${String(i+1).padStart(3,'0')}`,name:`${first} ${last}`,age:19+(i*7)%54,spirit:s.name,gift:s.gift,mark:s.mark,skill:s.skill,role:i<30?'БПСД — смешанный отряд':i<39?'БПСД — одержимый отряд': 'Свободный агент',temper:['Сдержанный','Вспыльчивый','Наблюдательный','Молчаливый','Дерзкий'][i%5],hp:85+(i%4)*5,level:1+(i%8)};
+    return {id:`poss-${String(i+1).padStart(3,'0')}`,name:`${first} ${last}`,age:19+(i*7)%54,spirit:spiritIdentityNames[i],spiritTemplate:template.name,gift:template.gift,mark:template.mark,skill:template.skill,role:i===0?'Орден — лидер':i<31?'БПСД — смешанный отряд':i<40?'БПСД — одержимый отряд':'Свободный агент',temper:['Сдержанный','Вспыльчивый','Наблюдательный','Молчаливый','Дерзкий'][i%5],hp:85+(i%4)*5,level:1+(i%8)};
   });
-  const walkerKinds = ['волк','пёс','кабан','олень','лошадь','крыса','ворон','медведь','лиса','крупная кошка','безымянный зверь'];
+  const orderLeader = possessed[0];
+  orderLeader.name = 'Вар';
+  orderLeader.faction = 'Орден';
+  orderLeader.role = 'Лидер Ордена · одержимый духом Войны';
+  const walkerKinds = [
+    {name:'волк',gender:'m'},{name:'пёс',gender:'m'},{name:'кабан',gender:'m'},{name:'олень',gender:'m'},
+    {name:'лошадь',gender:'f'},{name:'крыса',gender:'f'},{name:'ворон',gender:'m'},{name:'медведь',gender:'m'},
+    {name:'лиса',gender:'f'},{name:'крупная кошка',gender:'f'},{name:'безымянное животное',gender:'n'}
+  ];
+  const walkerAdjectives = {
+    m:['Искажённый','Костяной','Слепой','Голодный','Длиннорукий','Шипастый','Тихий','Рваный','Тяжёлый','Пепельный'],
+    f:['Искажённая','Костяная','Слепая','Голодная','Длиннорукая','Шипастая','Тихая','Рваная','Тяжёлая','Пепельная'],
+    n:['Искажённое','Костяное','Слепое','Голодное','Длиннорукое','Шипастое','Тихое','Рваное','Тяжёлое','Пепельное']
+  };
   const walkers = Array.from({length:100}, (_,i) => ({
     id:`walker-${String(i+1).padStart(3,'0')}`,
-    name:`${['Искажённый','Костяной','Слепой','Голодный','Длиннорукий','Шипастый','Тихий','Рваный','Тяжёлый','Пепельный'][i%10]} ${walkerKinds[i%walkerKinds.length]}`,
+    name:`${walkerAdjectives[walkerKinds[i%walkerKinds.length].gender][i%10]} ${walkerKinds[i%walkerKinds.length].name}`,
+    spirit:spiritIdentityNames[50+i],
+    spiritTemplate:spirits[(50+i)%spirits.length].name,
     size:['малый','средний','крупный','огромный'][i%4],
     aggression:45+(i*13)%56,
     hp:35+(i*17)%125,
@@ -62,15 +82,15 @@
     name:['Клин','Гриф','Пепел','Ворон','Клык','Рой','Кобра','Таран','Шрам','Волк'][i],
     type:'mixed',
     leader:humanNPCs[60+i].id,
-    members:possessed.slice(i*3,i*3+3).map(p=>p.id),
+    members:possessed.slice(1+i*3,1+i*3+3).map(p=>p.id),
     description:'Смешанный отряд: три одержимых оперативника под командованием человека.'
   }));
   const possessedTeams=Array.from({length:3},(_,i)=>({
     id:`P-${String(i+1).padStart(2,'0')}`,
     name:['Рой','Кремень','Ночной дозор'][i],
     type:'possessed',
-    leader:possessed[30+i*3].id,
-    members:possessed.slice(30+i*3+1,30+i*3+3).map(p=>p.id),
+    leader:possessed[31+i*3].id,
+    members:possessed.slice(32+i*3,34+i*3).map(p=>p.id),
     description:'Отряд БПСД, полностью состоящий из одержимых. Лидер также является одержимым.'
   }));
   const supportStaff=humanNPCs.slice(70,90);
@@ -104,8 +124,62 @@
     {id:'street-1',name:'Унтер-ден-Линден',kind:'street',x:42,y:18,description:'Центральная улица с историческими зданиями.'},
     {id:'street-2',name:'Фридрихштрассе',kind:'street',x:39,y:36,description:'Оживлённая торговая улица.'},
     {id:'street-3',name:'Карл-Маркс-аллее',kind:'street',x:79,y:31,description:'Широкая городская магистраль.'},
-    {id:'street-4',name:'Курфюрстендамм',kind:'street',x:22,y:58,description:'Известная торговая улица на западе города.'}
+    {id:'street-4',name:'Курфюрстендамм',kind:'street',x:22,y:58,description:'Известная торговая улица на западе города.'},
+    {id:'industrial-yard',name:'Заброшенный промышленный двор',kind:'industrial',x:8,y:68,description:'Старые ангары и ржавые ворота на окраине. Здесь часто находят следы ходячих.'},
+    {id:'underpass',name:'Подземный переход у Шпандау',kind:'underpass',x:15,y:61,description:'Тускло освещённый переход, где эхо шагов слышно раньше самих людей.'},
+    {id:'kreuzberg-alley',name:'Тёмный переулок Кройцберга',kind:'alley',x:50,y:66,description:'Узкий проход между домами. Местные стараются не задерживаться здесь после наступления темноты.'},
+    {id:'forest-edge',name:'Лесополоса за Берлином',kind:'danger',x:3,y:84,description:'Заросшая полоса за городской чертой. В этих местах пропадали животные и находили странные следы.'}
   ];
+
+  const countries = [
+    'Германия','Украина','Польша','Чехия','Франция','Великобритания','Россия','Австрия','Швейцария','Нидерланды',
+    'Бельгия','Люксембург','Дания','Швеция','Норвегия','Финляндия','Исландия','Ирландия','Испания','Португалия',
+    'Италия','Греция','Турция','Румыния','Болгария','Венгрия','Словакия','Словения','Хорватия','Сербия',
+    'Босния и Герцеговина','Черногория','Албания','Северная Македония','Литва','Латвия','Эстония','Беларусь','Молдова','Грузия',
+    'Армения','Азербайджан','Казахстан','США','Канада','Мексика','Бразилия','Аргентина','Япония','Южная Корея',
+    'Китай','Индия','Израиль','Египет','Марокко','ЮАР','Австралия','Новая Зеландия','Другая страна'
+  ];
+  const extraHomes = [
+    ['house-4','Студия у Александерплац','Митте',52,31,540,'Небольшая студия в многоквартирном доме.'],
+    ['house-5','Комната в Веддинге','Веддинг',36,18,320,'Недорогая комната в старом жилом доме.'],
+    ['house-6','Квартира в Пренцлауэр-Берге','Пренцлауэр-Берг',66,17,780,'Светлая квартира в спокойном квартале.'],
+    ['house-7','Мансарда во Фридрихсхайне','Фридрихсхайн',74,43,610,'Небольшая мансарда с видом на улицу.'],
+    ['house-8','Квартира в Темпельхофе','Темпельхоф',43,76,590,'Обычная квартира в жилом районе.'],
+    ['house-9','Дом в Шпандау','Шпандау',10,68,980,'Отдельный дом на тихой окраине.'],
+    ['house-10','Комната в Моабите','Моабит',30,28,360,'Комната с общей кухней и ванной.'],
+    ['house-11','Квартира в Шёнеберге','Шёнеберг',34,66,690,'Двухкомнатная квартира недалеко от транспорта.'],
+    ['house-12','Квартира в Трептове','Трептов',83,69,570,'Жильё рядом с зелёной зоной и набережной.'],
+    ['house-13','Старый таунхаус в Панкове','Панков',81,9,890,'Небольшой таунхаус с внутренним двориком.'],
+    ['house-14','Подвальная студия в Кройцберге','Кройцберг',48,59,410,'Скромная студия с отдельным входом.'],
+    ['house-15','Комната в Нойкёльне','Нойкёльн',59,82,340,'Комната в квартире с соседями.']
+  ];
+  extraHomes.forEach(([id,name,district,x,y,price,description])=>locations.push({id,name,kind:'house',district,x,y,price,description}));
+  // Интерьеры — отдельные локации. Они не отображаются на городской карте.
+  const interiors=[];
+  locations.filter(l=>l.kind==='house').forEach((home,index)=>{
+    const rooms=[
+      {suffix:'hall',name:'Прихожая',features:['coat-rack','door']},
+      {suffix:'kitchen',name:'Кухня',features:['fridge','sink','table','kettle']},
+      {suffix:'living',name:'Гостиная',features:['sofa','tv','laptop']},
+      {suffix:'bedroom',name:'Спальня',features:['bed','wardrobe']},
+      {suffix:'bathroom',name:'Ванная',features:['shower','mirror','sink']}
+    ];
+    rooms.forEach((room,ri)=>interiors.push({id:`${home.id}-${room.suffix}`,name:`${room.name} · ${home.name}`,kind:'interior',parent:home.id,district:home.district||'Берлин',x:home.x,y:home.y,private:true,map:false,features:room.features,description:`Внутреннее помещение: ${room.name.toLowerCase()}.`}));
+  });
+  locations.push(...interiors);
+  // Служебное размещение БПСД — это не личная собственность персонажа.
+  locations.push({id:'quarters-bpsd',name:'Служебный дом БПСД',kind:'quarters',district:'Митте',x:53,y:39,map:false,description:'Общее служебное здание для сотрудников, которым не полагается личное жильё.'});
+  ['Общая кухня','Комната отдыха','Спальня дежурной смены','Душевая'].forEach((name,i)=>locations.push({id:`quarters-bpsd-room-${i+1}`,name:`${name} · Служебный дом БПСД`,kind:'interior',parent:'quarters-bpsd',allowedFaction:'БПСД',district:'Митте',x:53,y:39,private:true,map:false,features:[['fridge','sink','table','people'],['sofa','tv','laptop','people'],['bed','wardrobe'],['shower','sink']][i],description:`Служебное помещение: ${name.toLowerCase()}.`}));
+  const deviceDefaults = {phone:'Смартфон',laptop:'Ноутбук',watch:'Наручные часы'};
+  function findSpiritHost(name){
+    const key=String(name||'').trim().toLocaleLowerCase('ru');
+    if(!key)return null;
+    return possessed.find(x=>x.spirit.toLocaleLowerCase('ru')===key)
+      || walkers.find(x=>x.spirit.toLocaleLowerCase('ru')===key)
+      || null;
+  }
+  function isSpiritAvailable(name){return !findSpiritHost(name);}
+
   const jobs=[
     {id:'barista',name:'Бариста',place:'cafe-k',pay:75,energy:18,desc:'Приготовление кофе и обслуживание посетителей.'},
     {id:'courier',name:'Курьер',place:'mitte',pay:95,energy:28,desc:'Доставка небольших заказов по городу.'},
@@ -114,5 +188,5 @@
     {id:'security',name:'Охранник',place:'stadium',pay:105,energy:20,desc:'Контроль входа и порядка.'},
     {id:'cook',name:'Помощник повара',place:'restaurant-n',pay:90,energy:22,desc:'Подготовка продуктов и помощь на кухне.'}
   ];
-  window.OD_DATA={spirits,possessed,walkers,humanNPCs,humanTeams,mixedTeams,possessedTeams,supportStaff,civilians,locations,jobs};
+  window.OD_DATA={spirits,spiritIdentityNames,possessed,walkers,orderLeader,humanNPCs,humanTeams,mixedTeams,possessedTeams,supportStaff,civilians,locations,jobs,countries,deviceDefaults,findSpiritHost,isSpiritAvailable};
 })();
